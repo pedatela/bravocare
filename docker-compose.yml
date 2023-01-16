@@ -1,0 +1,41 @@
+version: '3.7'
+
+services:
+  database_bravocare:
+    image: postgres:12.12
+    container_name: database_bravocare
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=bravocare
+      - POSTGRES_DB=bravocare
+
+  server:
+    build: ./server
+    command: npm start
+    restart: on-failure:10
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: database_bravocare
+      DB_USER: docker
+      DB_PASSWORD: bravocare
+      DB_NAME: bravocare
+    depends_on:
+      - database_bravocare
+  client:
+    build: ./client
+    command: npm start
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/usr/src/client
+      - /usr/src/client/node_modules
+    environment:
+      REACT_APP_API_HOST: server/api
+    depends_on:
+      - server
+    links:
+      - server
